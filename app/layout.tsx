@@ -22,7 +22,7 @@ export default function RootLayout({
     <ClerkProvider>
     <html lang="pt-BR">
       <body
-        className={`${kode_Mono.variable}`}
+        className={kode_Mono.className}
       >
         {children}
       </body>
