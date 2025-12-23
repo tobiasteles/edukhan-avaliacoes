@@ -19,7 +19,7 @@ export default function Home() {
       <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         
         {/* Imagem / Hero visual */}
-        <div className="relative w-full h-[260px] lg:h-[420px]">
+        <div className="relative w-full h-65 lg:h-105">
           <Image
             src="/siblings-listening-music-using-laptop.jpg"
             alt="Crianças aprendendo"
@@ -57,8 +57,8 @@ export default function Home() {
               <SignedOut>
                 <SignUpButton
                   mode="modal"
-                  afterSignUpUrl="/learn"
-                  afterSignInUrl="/learn"
+                  afterSignUpUrl="/dashboard"
+                  afterSignInUrl="/dashboard"
                 >
                   <Button size="lg" className="w-full">
                     Vamos começar?
@@ -68,8 +68,8 @@ export default function Home() {
 
                 <SignInButton
                   mode="modal"
-                  afterSignInUrl="/learn"
-                  afterSignUpUrl="/learn"
+                  afterSignInUrl="/dashboard"
+                  afterSignUpUrl="/dashboard"
                 >
                   <Button size="lg" variant="outline" className="w-full">
                     Já tenho uma conta
@@ -79,7 +79,7 @@ export default function Home() {
 
               <SignedIn>
                 <Button size="lg" className="w-full" asChild>
-                  <Link href="/learn">
+                  <Link href="/dashboard">
                     Continuar aprendendo
                   </Link>
                 </Button>

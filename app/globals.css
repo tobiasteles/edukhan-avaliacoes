@@ -123,3 +123,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+.font-kode {
+  font-family: var(--font-kode-mono);
+}
+
