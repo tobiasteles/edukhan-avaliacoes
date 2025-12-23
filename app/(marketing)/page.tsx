@@ -40,7 +40,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-3xl lg:text-4xl font-bold text-neutral-800 max-w-md">
-            Aprenda, pratique e domine o Bê-a-Bá com a gente
+            Plataforma de Avaliações do Edukhan
           </h1>
 
           <p className="text-muted-foreground max-w-md">
