@@ -80,7 +80,7 @@ export default function Home() {
               <SignedIn>
                 <Button size="lg" className="w-full" asChild>
                   <Link href="/dashboard">
-                    Continuar aprendendo
+                    Continuar
                   </Link>
                 </Button>
               </SignedIn>

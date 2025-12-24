@@ -69,26 +69,26 @@ export default async function DashboardPage() {
           Painel de Controle do Aluno
         </h1>
         <p className="text-muted-foreground">
-          Overview of your exams and performance
+          Visão geral de suas avaliações e desempenho
         </p>
       </div>
 
       {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardCard
-          title="Available Exams"
+          title="Avaliações Disponíveis"
           value={availableExams.length.toString()}
           icon={FileText}
         />
 
         <DashboardCard
-          title="Completed Exams"
+          title="Avaliações Concluídas"
           value={completedExams.length.toString()}
           icon={CheckSquare}
         />
 
         <DashboardCard
-          title="Average Score"
+          title="Média de Pontuação"
           value={
             averageScore[0]?.value
               ? Number(averageScore[0].value).toFixed(1)
@@ -98,7 +98,7 @@ export default async function DashboardPage() {
         />
 
         <DashboardCard
-          title="Best Score"
+          title="Melhor Pontuação"
           value={
             bestScore[0]?.value
               ? bestScore[0].value.toString()
@@ -113,13 +113,13 @@ export default async function DashboardPage() {
         {/* Provas disponíveis */}
         <div className="bg-white border rounded-xl p-4">
           <h2 className="font-semibold mb-3">
-            Available Exams
+            Avaliações Disponíveis
           </h2>
 
           <ul className="space-y-2">
             {availableExams.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                No exams available
+                Não há avaliações disponíveis no momento
               </p>
             )}
 
@@ -130,7 +130,7 @@ export default async function DashboardPage() {
               >
                 <span>{exam.title}</span>
                 <button className="text-blue-600 font-semibold">
-                  Start
+                  Começar
                 </button>
               </li>
             ))}
@@ -140,13 +140,13 @@ export default async function DashboardPage() {
         {/* Últimos resultados */}
         <div className="bg-white border rounded-xl p-4">
           <h2 className="font-semibold mb-3">
-            Recent Results
+            Resultados Recentes
           </h2>
 
           <ul className="space-y-2">
             {recentResults.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                No exams completed yet
+                Nenhuma avaliação concluída ainda
               </p>
             )}
 
@@ -155,7 +155,7 @@ export default async function DashboardPage() {
                 key={attempt.id}
                 className="flex justify-between border p-3 rounded-lg"
               >
-                <span>Exam #{attempt.examId}</span>
+                <span>Prova #{attempt.examId}</span>
                 <span className="font-bold text-green-600">
                   {attempt.score}
                 </span>
