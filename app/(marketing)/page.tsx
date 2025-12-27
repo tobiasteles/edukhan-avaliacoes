@@ -44,7 +44,7 @@ export default function Home() {
           </h1>
 
           <p className="text-muted-foreground max-w-md">
-           A Plataforma de Avaliações do Edukhan foi criada para acompanhar e medir, de forma simples e objetiva, o nível de aprendizagem dos alunos atendidos pelo projeto Educam.
+           A Plataforma de Avaliações do Edukhan foi criada para acompanhar e medir, de forma simples e objetiva, o nível de aprendizagem dos alunos atendidos pelo projeto Edukhan.
           </p>
 
           {/* Ações */}

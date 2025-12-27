@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
   boolean,
   integer,
@@ -8,126 +9,109 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 
-/* ---------------- ENUMS ---------------- */
-
-export const userRoleEnum = pgEnum("user_role", [
-  "aluno",
-  "professor",
-]);
-
-export const questionTypeEnum = pgEnum("question_type", [
-  "SELECT",
-  "ASSIST",
-]);
-
-export const attemptStatusEnum = pgEnum("attempt_status", [
-  "in_progress",
-  "completed",
-]);
-
-/* ---------------- PROFILES (ponte com Clerk) ---------------- */
-
-export const profiles = pgTable("profiles", {
-  id: serial("id").primaryKey(),
-  clerkUserId: text("clerk_user_id").notNull().unique(),
-  role: userRoleEnum("role").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-/* ---------------- STUDENTS ---------------- */
-
 export const students = pgTable("students", {
   id: serial("id").primaryKey(),
-
-  profileId: integer("profile_id")
-    .references(() => profiles.id, { onDelete: "cascade" })
-    .notNull(),
-
   name: text("name").notNull(),
-  className: text("class_name"),
-
-  createdAt: timestamp("created_at").defaultNow(),
+  age: integer("age").notNull(),
+  grade: integer("grade").notNull(),
+  schoolName: text("school_name").notNull(),
+  unit: text("unit").notNull(),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-/* ---------------- TEACHERS ---------------- */
-
-export const teachers = pgTable("teachers", {
-  id: serial("id").primaryKey(),
-
-  profileId: integer("profile_id")
-    .references(() => profiles.id, { onDelete: "cascade" })
-    .notNull(),
-
-  name: text("name").notNull(),
-
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-/* ---------------- EXAMS ---------------- */
+export const studentsRelations = relations(students, ({ many }) => ({
+  examAttempts: many(examAttempts),
+}));
 
 export const exams = pgTable("exams", {
   id: serial("id").primaryKey(),
-
   title: text("title").notNull(),
   description: text("description"),
-
-  teacherId: integer("teacher_id")
-    .references(() => teachers.id, { onDelete: "cascade" })
-    .notNull(),
-
-  isPublished: boolean("is_published").default(false),
-
-  createdAt: timestamp("created_at").defaultNow(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-/* ---------------- QUESTIONS ---------------- */
-
-export const questions = pgTable("questions", {
-  id: serial("id").primaryKey(),
-
-  examId: integer("exam_id")
-    .references(() => exams.id, { onDelete: "cascade" })
-    .notNull(),
-
-  type: questionTypeEnum("type").notNull(),
-  statement: text("statement").notNull(),
-  correctAnswer: text("correct_answer").notNull(),
-
-  order: integer("order").notNull(),
-});
-
-/* ---------------- QUESTION OPTIONS ---------------- */
-
-export const questionOptions = pgTable("question_options", {
-  id: serial("id").primaryKey(),
-
-  questionId: integer("question_id")
-    .references(() => questions.id, { onDelete: "cascade" })
-    .notNull(),
-
-  text: text("text"),
-  imageSrc: text("image_src"),
-  correct: boolean("correct").default(false),
-});
-
-/* ---------------- EXAM ATTEMPTS ---------------- */
+export const examsRelations = relations(exams, ({ many }) => ({
+  questions: many(questions),
+  examAttempts: many(examAttempts),
+}));
 
 export const examAttempts = pgTable("exam_attempts", {
   id: serial("id").primaryKey(),
-
-   userId: text("user_id").notNull(),
-
-  examId: integer("exam_id")
-    .references(() => exams.id, { onDelete: "cascade" })
-    .notNull(),
-
   studentId: integer("student_id")
-    .references(() => students.id, { onDelete: "cascade" })
-    .notNull(),
-
-  score: integer("score"),
-  status: attemptStatusEnum("status").default("in_progress"),
-
-  startedAt: timestamp("started_at").defaultNow(),
+    .notNull()
+    .references(() => students.id, { onDelete: "cascade" }),
+  examId: integer("exam_id")
+    .notNull()
+    .references(() => exams.id, { onDelete: "cascade" }),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
 });
+
+
+export const questionsEnum = pgEnum("question_type", ["multiple_choice", "true_false"]);
+
+export const questions = pgTable("questions", {
+  id: serial("id").primaryKey(),
+  examId: integer("exam_id")
+    .notNull()
+    .references(() => exams.id, { onDelete: "cascade" }),
+    type: questionsEnum("type").notNull(),
+  content: text("content").notNull(),
+  order: integer("order").notNull(),
+});
+
+export const questionsRelations = relations(questions, ({ many, one }) => ({
+  exam: one(exams),
+  options: many(questionOptions),
+  examAnswers: many(examAnswers),
+}));
+
+export const questionOptions = pgTable("question_options", {
+  id: serial("id").primaryKey(),
+  questionId: integer("question_id")
+    .notNull()
+    .references(() => questions.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  isCorrect: boolean("is_correct").default(false).notNull(),
+  imageSrc: text("image_src")
+});
+
+export const questionOptionsRelations = relations(questionOptions, ({ one }) => ({
+  question: one(questions),
+}));
+
+export const examResults = pgTable("exam_results", {
+  id: serial("id").primaryKey(),
+  examAttemptId: integer("exam_attempt_id")
+    .notNull()
+    .references(() => examAttempts.id, { onDelete: "cascade" }),
+  score: integer("score").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at").notNull(),
+});
+
+export const examResultsRelations = relations(examResults, ({ one }) => ({
+  examAttempt: one(examAttempts),
+}));
+
+export const examAnswers = pgTable("exam_answers", {
+  id: serial("id").primaryKey(),
+  examAttemptId: integer("exam_attempt_id")
+    .notNull()
+    .references(() => examAttempts.id, { onDelete: "cascade" }),
+  questionId: integer("question_id")
+    .notNull()
+    .references(() => questions.id, { onDelete: "cascade" }),
+  optionId: integer("option_id")
+    .references(() => questionOptions.id),
+});
+
+
+export const examAnswersRelations = relations(examAnswers, ({ one }) => ({
+  examAttempt: one(examAttempts),
+  question: one(questions),
+  option: one(questionOptions)
+}));
