@@ -19,6 +19,8 @@ export const students = pgTable("students", {
   city: text("city").notNull(),
   state: text("state").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  userImageSrc: text("user_image_src").notNull().default("/user.png"),
+  
 });
 
 export const studentsRelations = relations(students, ({ many }) => ({
@@ -50,21 +52,42 @@ export const examAttempts = pgTable("exam_attempts", {
   completedAt: timestamp("completed_at"),
 });
 
+export const examAttemptsRelations = relations(
+  examAttempts,
+  ({ one, many }) => ({
+    exam: one(exams, {
+      fields: [examAttempts.examId],
+      references: [exams.id],
+    }),
+    students: one(students, {
+      fields: [examAttempts.studentId],
+      references: [students.userId],
+    }),
+    examAnswers: many(examAnswers),
+    examResults: many(examResults),
+  })
+);
 
-export const questionsEnum = pgEnum("question_type", ["multiple_choice", "true_false"]);
+export const questionsEnum = pgEnum("question_type", [
+  "multiple_choice",
+  "true_false",
+]);
 
 export const questions = pgTable("questions", {
   id: serial("id").primaryKey(),
   examId: integer("exam_id")
     .notNull()
     .references(() => exams.id, { onDelete: "cascade" }),
-    type: questionsEnum("type").notNull(),
+  type: questionsEnum("type").notNull(),
   content: text("content").notNull(),
   order: integer("order").notNull(),
 });
 
 export const questionsRelations = relations(questions, ({ many, one }) => ({
-  exam: one(exams),
+  exam: one(exams, {
+    fields: [questions.examId],
+    references: [exams.id],
+  }),
   options: many(questionOptions),
   examAnswers: many(examAnswers),
 }));
@@ -79,9 +102,12 @@ export const questionOptions = pgTable("question_options", {
   imageSrc: text("image_src"),
 });
 
-export const questionOptionsRelations = relations(questionOptions, ({ one }) => ({
-  question: one(questions),
-}));
+export const questionOptionsRelations = relations(
+  questionOptions,
+  ({ one }) => ({
+    question: one(questions),
+  })
+);
 
 export const examResults = pgTable("exam_results", {
   id: serial("id").primaryKey(),
@@ -94,7 +120,10 @@ export const examResults = pgTable("exam_results", {
 });
 
 export const examResultsRelations = relations(examResults, ({ one }) => ({
-  examAttempt: one(examAttempts),
+  examAttempt: one(examAttempts, {
+    fields: [examResults.examAttemptId],
+    references: [examAttempts.id],
+  }),
 }));
 
 export const examAnswers = pgTable("exam_answers", {
@@ -105,13 +134,20 @@ export const examAnswers = pgTable("exam_answers", {
   questionId: integer("question_id")
     .notNull()
     .references(() => questions.id, { onDelete: "cascade" }),
-  optionId: integer("option_id")
-    .references(() => questionOptions.id),
+  optionId: integer("option_id").references(() => questionOptions.id),
 });
 
-
 export const examAnswersRelations = relations(examAnswers, ({ one }) => ({
-  examAttempt: one(examAttempts),
-  question: one(questions),
-  option: one(questionOptions)
+  examAttempt: one(examAttempts, {
+    fields: [examAnswers.examAttemptId],
+    references: [examAttempts.id],
+  }),
+  question: one(questions, {
+    fields: [examAnswers.questionId],
+    references: [questions.id],
+  }),
+  option: one(questionOptions, {
+    fields: [examAnswers.optionId],
+    references: [questionOptions.id],
+  }),
 }));
