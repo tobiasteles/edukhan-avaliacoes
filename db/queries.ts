@@ -72,7 +72,7 @@ export const getExamsProgress = cache(async () => {
       return true;
     }
 
-    return false;
+    return false
   });
 
   return { examsWithProgress, firstUncompletedExam };
