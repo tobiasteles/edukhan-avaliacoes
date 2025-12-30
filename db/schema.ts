@@ -10,7 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const students = pgTable("students", {
-  id: serial("id").primaryKey(),
+  userId: text("user_id").primaryKey(),
   name: text("name").notNull(),
   age: integer("age").notNull(),
   grade: integer("grade").notNull(),
@@ -40,9 +40,9 @@ export const examsRelations = relations(exams, ({ many }) => ({
 
 export const examAttempts = pgTable("exam_attempts", {
   id: serial("id").primaryKey(),
-  studentId: integer("student_id")
+  studentId: text("user_id")
     .notNull()
-    .references(() => students.id, { onDelete: "cascade" }),
+    .references(() => students.userId, { onDelete: "cascade" }),
   examId: integer("exam_id")
     .notNull()
     .references(() => exams.id, { onDelete: "cascade" }),
@@ -76,7 +76,7 @@ export const questionOptions = pgTable("question_options", {
     .references(() => questions.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   isCorrect: boolean("is_correct").default(false).notNull(),
-  imageSrc: text("image_src")
+  imageSrc: text("image_src"),
 });
 
 export const questionOptionsRelations = relations(questionOptions, ({ one }) => ({
