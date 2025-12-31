@@ -23,7 +23,8 @@ export const List = ({ exams, firstUncompletedExam }: Props) => {
         try {
           const attemptId = await upsertExamProgress(examId);
 
-          router.push(`/exam/${examId}/attempt/${attemptId}`);
+          router.push(`/exam/${examId}/attempt/${attemptId}/start`);
+
         } catch {
           toast.error("Não foi possível iniciar a prova. Tente novamente.");
         }
