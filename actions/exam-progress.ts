@@ -3,7 +3,7 @@
 import db from "@/db/drizzle";
 import { examAttempts, exams, students } from "@/db/schema";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -27,11 +27,13 @@ export const upsertExamProgress = async (examId: number) => {
     throw new Error("Exame inativo.");
   }
 
+  
+
   const existingStudent = await db.query.students.findFirst({
     where: eq(students.userId, userId),
   });
 
-  if (existingStudent) {
+  if (!existingStudent) {
     await db.insert(students).values({
       userId,
       name: user.firstName || "Usuário não informado",
@@ -55,8 +57,9 @@ export const upsertExamProgress = async (examId: number) => {
 
   const existingAttempt = await db.query.examAttempts.findFirst({
     where: and(
+      eq(examAttempts.examId, examId),
       eq(examAttempts.studentId, userId),
-      eq(examAttempts.examId, examId)
+      isNull(examAttempts.completedAt)
     ),
   });
 

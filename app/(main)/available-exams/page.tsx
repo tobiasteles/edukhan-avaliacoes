@@ -29,7 +29,7 @@ const AvailableExamsPage = async () => {
         <Header title="Provas Disponíveis" />
         {exams.map((exam) => (
           <div key={exam.id} className="mb-10 text-lime-300">
-              <></>
+             
           </div>
         ))
 

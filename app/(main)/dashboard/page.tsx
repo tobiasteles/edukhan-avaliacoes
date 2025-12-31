@@ -14,6 +14,10 @@ export default async function DashboardPage() {
     <div className="h-full max-w-228 px-3 mx-auto">
       <h1 className="text-2xl font-bold text-neutral-700">Painel do Aluno</h1>
 
+      <p className="text-neutral-500 mt-1">
+        Continue ou escolha uma nova prova 👇
+      </p>
+
       <List
         exams={exams}
         firstUncompletedExam={examsProgress?.firstUncompletedExam?.id}

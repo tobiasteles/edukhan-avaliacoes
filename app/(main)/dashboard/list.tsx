@@ -16,22 +16,24 @@ export const List = ({ exams, firstUncompletedExam }: Props) => {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  const onClick = (id: number) => {
+  const onClick = (examId: number) => {
     if (pending) return;
 
-    if (id === firstUncompletedExam) {
-      return router.push("/dashboard");
-    }
+      startTransition(async () => {
+        try {
+          const attemptId = await upsertExamProgress(examId);
 
-    startTransition(() => {
-      upsertExamProgress(id).catch(() =>
-        toast.error("Falha ao iniciar o exame.")
-      );
-    });
+          router.push(`/exam/${examId}/attempt/${attemptId}`);
+        } catch {
+          toast.error("Não foi possível iniciar a prova. Tente novamente.");
+        }
+      });
+
+
   };
 
   return (
-    <div className="pt-6 grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-4">
+    <div className="pt-6 grid gap-6 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
       {exams.map((exam) => (
         <Card
           key={exam.id}

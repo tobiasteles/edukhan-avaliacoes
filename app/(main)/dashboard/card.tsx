@@ -19,36 +19,67 @@ export const Card = ({
   onClick,
   disabled,
   active,
-  imageSrc
+  imageSrc,
 }: Props) => {
+
+  const getIconByTitle = (title: string) => {
+  const normalized = title.toLowerCase();
+
+  if (normalized.includes("matem")) return "📐";
+  if (normalized.includes("hist")) return "📜";
+  if (normalized.includes("ciên") || normalized.includes("cien")) return "🔬";
+  if (normalized.includes("geog")) return "🌎";
+
+  return "📘"; // fallback genérico
+};
+
+
+
   return (
     <div
       onClick={() => onClick(id)}
       className={cn(
-        "border-2 rounded-xl border-b-4 hover:bg-black/5 cursor-pointer active:border-b-2 flex flex-col items-center justify-between p-3 pb-6 min-h-54.25 min-w-50",
+        "relative border-2 rounded-xl border-b-4 cursor-pointer flex flex-col items-center justify-between p-4 pb-6 min-h-52.5 transition-all",
+        active
+          ? "border-blue-600 bg-blue-50 hover:bg-blue-100"
+          : "hover:bg-black/5",
         disabled && "pointer-events-none opacity-50"
       )}
     >
-        <div className="h-6 w-full flex items-center justify-end">
-            {active && (
-                <div className="rounded-md bg-blue-700 flex items-center justify-center p-1.5">
-                    <Check className="text-white stroke-4 h-4 w-4" />
-                </div>
-            )}
-        </div>
-        {imageSrc && (
-            <Image
-            src={imageSrc}
-            alt={title}
-            height={70}
-            width={93.33}
-            className="rounded-lg drop-shadow-md border object-cover"
-            />
+      <div className="h-6 w-full flex items-center justify-end">
+        {active && (
+          <div className="rounded-md bg-blue-700 flex items-center justify-center p-1.5">
+            <Check className="text-white stroke-4 h-4 w-4" />
+          </div>
         )}
-        <p className="text-neutral-700 text-center font-bold mt-3">{title}</p>
-        {description && (
-            <p className="text-neutral-500 text-center text-sm mt-1">{description}</p>
+      </div>
+      {imageSrc && (
+        <Image
+          src={imageSrc}
+          alt={title}
+          height={70}
+          width={93.33}
+          className="rounded-lg drop-shadow-md border object-cover"
+        />
+      )}
+      <p className="text-neutral-700 text-center font-bold mt-3">{getIconByTitle(title)} {title}</p>
+      <span
+        className={cn(
+          "mt-2 text-xs font-semibold px-3 py-1 rounded-full",
+          active ? "bg-blue-600 text-white" : "bg-neutral-200 text-neutral-600"
         )}
+      >
+        {active ? "Em andamento" : "Disponível"}
+      </span>
+
+      {description && (
+        <p className="text-neutral-500 text-center text-sm mt-1">
+          {description}
+        </p>
+      )}
+      <p className="mt-3 text-sm font-semibold text-blue-700">
+        {active ? "Continuar prova →" : "Iniciar prova →"}
+      </p>
     </div>
   );
 };
