@@ -39,7 +39,7 @@ export default function StudentForm({ examId, attemptId }: Props) {
         state: String(formData.get("state")),
       });
 
-      router.push(`/exam/${examId}/attempt/${attemptId}/start`);
+      router.push(`/exam/${examId}/attempt/${attemptId}/take`);
     } catch (error) {
       console.error(error);
       alert("Erro ao salvar os dados do aluno");
