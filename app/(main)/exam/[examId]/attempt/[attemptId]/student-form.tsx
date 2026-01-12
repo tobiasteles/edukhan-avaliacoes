@@ -39,6 +39,7 @@ export default function StudentForm({ examId, attemptId }: Props) {
         state: String(formData.get("state")),
       });
 
+      router.refresh(); // Limpa o cache do Next.js
       router.push(`/exam/${examId}/attempt/${attemptId}/take`);
     } catch (error) {
       console.error(error);

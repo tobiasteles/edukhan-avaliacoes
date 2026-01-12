@@ -1,10 +1,8 @@
 "use client";
 
-import { upsertExamProgress } from "@/actions/exam-progress";
 import { examAttempts, exams } from "@/db/schema";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { toast } from "sonner";
 import { Card } from "./card";
 
 type Props = {
@@ -19,18 +17,11 @@ export const List = ({ exams, firstUncompletedExam }: Props) => {
   const onClick = (examId: number) => {
     if (pending) return;
 
-      startTransition(async () => {
-        try {
-          const attemptId = await upsertExamProgress(examId);
-
-          router.push(`/exam/${examId}/attempt/${attemptId}/start`);
-
-        } catch {
-          toast.error("Não foi possível iniciar a prova. Tente novamente.");
-        }
-      });
-
-
+      startTransition(() => {
+    // Simplesmente mande para a rota do exame. 
+    // A página do servidor decidirá se cria tentativa ou se vai pro form.
+    router.push(`/exam/${examId}`); 
+  });
   };
 
   return (

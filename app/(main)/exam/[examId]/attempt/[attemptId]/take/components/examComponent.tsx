@@ -28,25 +28,27 @@ interface ExamComponentProps {
   };
 }
 
-
-
 export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
   const router = useRouter();
   const handleSubmitRef = useRef<(() => Promise<void>) | null>(null);
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  
   const initialAnswers = useMemo(() => {
     const initial: AnswerState = {};
-    exam.questions.forEach((q) => {
+    // Usamos o ?. para prevenir erro caso questions seja undefined
+    exam.questions?.forEach((q) => {
       initial[q.id] = null;
     });
     return initial;
   }, [exam.questions]);
+
   const [answers, setAnswers] = useState<AnswerState>(initialAnswers);
-  const [timeLeft, setTimeLeft] = useState(60 * 60); // 60 minutos
+  const [timeLeft, setTimeLeft] = useState(60 * 60); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [warnings, setWarnings] = useState(0);
 
+  // --- CÁLCULO DAS CONSTANTES ---
   const currentQuestion = exam.questions[currentQuestionIndex];
   const totalQuestions = exam.questions.length;
 
@@ -54,11 +56,10 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
     (v) => v !== null
   ).length;
 
+  // --- HANDLERS ---
   const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;
-
     setIsSubmitting(true);
-
     try {
       const payload = Object.entries(answers)
         .filter(([, optionId]) => optionId !== null)
@@ -66,12 +67,8 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
           questionId: Number(questionId),
           optionId: optionId!,
         }));
-
       await submitExam(attempt.id, payload);
-
-      router.push(
-        `/exam/${exam.id}/attempt/${attempt.id}/result`
-      );
+      router.push(`/exam/${exam.id}/attempt/${attempt.id}/result`);
     } catch (err) {
       console.error(err);
       alert("Erro ao enviar a prova.");
@@ -83,16 +80,13 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
     handleSubmitRef.current = handleSubmit;
   }, [handleSubmit]);
 
-  // Timer
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => prev - 1);
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
 
-  // Handle timeout submission
   useEffect(() => {
     if (timeLeft <= 0 && handleSubmitRef.current) {
       handleSubmitRef.current();
@@ -109,13 +103,11 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
   const handleSecurityViolation = useCallback(() => {
     setWarnings((prev) => {
       const next = prev + 1;
-
       if (next >= 3) {
         handleSubmit();
       } else {
         alert(`⚠️ Aviso ${next}/3 — não saia da prova.`);
       }
-
       return next;
     });
   }, [handleSubmit]);
@@ -126,6 +118,25 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
     return `${min}:${sec.toString().padStart(2, "0")}`;
   };
 
+  // --- BLOCO DE PROTEÇÃO (DEVE FICAR AQUI, ANTES DO RETURN PRINCIPAL) ---
+  if (totalQuestions === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center p-6">
+        <h2 className="text-2xl font-bold mb-2">Ops! Nenhuma questão encontrada.</h2>
+        <p className="text-neutral-500 mb-6">Esta prova ainda não possui perguntas cadastradas ou houve um erro no carregamento.</p>
+        <button 
+          onClick={() => router.push("/dashboard")} 
+          className="bg-black text-white px-6 py-2 rounded-lg font-medium"
+        >
+          Voltar ao Painel
+        </button>
+      </div>
+    );
+  }
+
+  if (!currentQuestion) return null;
+
+  // --- RENDERIZAÇÃO PRINCIPAL ---
   return (
     <>
       <ExamSecurity onViolation={handleSecurityViolation} warnings={warnings} />
@@ -138,46 +149,49 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
           )}
         </header>
 
-        <div className="flex justify-between mb-4">
-          <span>⏱ {formatTime(timeLeft)}</span>
+        <div className="flex justify-between mb-4 font-mono bg-neutral-100 p-3 rounded-lg">
+          <span>⏱ Tempo: {formatTime(timeLeft)}</span>
           <span>
             {answeredQuestions}/{totalQuestions} respondidas
           </span>
         </div>
 
-        <div className="mb-6">
-          <h2 className="font-semibold mb-2">
+        <div className="mb-6 border p-6 rounded-xl shadow-sm">
+          <h2 className="font-bold text-lg mb-4 text-blue-700">
             Questão {currentQuestionIndex + 1}
           </h2>
-          <p className="mb-4">{currentQuestion.content}</p>
+          <p className="text-xl mb-6 leading-relaxed">{currentQuestion.content}</p>
 
-          <div className="space-y-3">
+          <div className="grid gap-3">
             {currentQuestion.options.map((opt) => {
-              const selected =
-                answers[currentQuestion.id] === opt.id;
+              const selected = answers[currentQuestion.id] === opt.id;
 
               return (
                 <div
                   key={opt.id}
-                  onClick={() =>
-                    handleAnswer(currentQuestion.id, opt.id)
-                  }
-                  className={`border p-4 rounded cursor-pointer ${
+                  onClick={() => handleAnswer(currentQuestion.id, opt.id)}
+                  className={`border-2 p-4 rounded-xl cursor-pointer transition-all ${
                     selected
-                      ? "border-blue-500 bg-blue-50"
-                      : "hover:bg-gray-50"
+                      ? "border-blue-600 bg-blue-50 ring-2 ring-blue-600/20"
+                      : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
                   }`}
                 >
-                  <p>{opt.content}</p>
+                  <div className="flex items-center gap-3">
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${selected ? "border-blue-600" : "border-neutral-300"}`}>
+                        {selected && <div className="h-2.5 w-2.5 bg-blue-600 rounded-full" />}
+                    </div>
+                    <p className="font-medium text-neutral-800">{opt.content}</p>
+                  </div>
 
                   {opt.imageSrc && (
-                    <Image
-                      src={opt.imageSrc}
-                      alt="Opção"
-                      width={300}
-                      height={200}
-                      className="mt-2 rounded"
-                    />
+                    <div className="mt-4 relative w-full h-48">
+                        <Image
+                          src={opt.imageSrc}
+                          alt="Opção"
+                          fill
+                          className="rounded-lg object-contain"
+                        />
+                    </div>
                   )}
                 </div>
               );
@@ -185,33 +199,32 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
           </div>
         </div>
 
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center mt-8">
           <button
+            className="px-6 py-2 rounded-lg border-2 font-semibold disabled:opacity-30"
             disabled={currentQuestionIndex === 0}
-            onClick={() =>
-              setCurrentQuestionIndex((i) => i - 1)
-            }
+            onClick={() => setCurrentQuestionIndex((i) => i - 1)}
           >
-            Anterior
+            ← Anterior
           </button>
 
-          <button
-            disabled={currentQuestionIndex === totalQuestions - 1}
-            onClick={() =>
-              setCurrentQuestionIndex((i) => i + 1)
-            }
-          >
-            Próxima
-          </button>
+          {currentQuestionIndex === totalQuestions - 1 ? (
+             <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-green-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-green-700 disabled:opacity-50"
+             >
+               {isSubmitting ? "Enviando..." : "Finalizar Prova"}
+             </button>
+          ) : (
+            <button
+              className="px-6 py-2 bg-neutral-800 text-white rounded-lg font-semibold"
+              onClick={() => setCurrentQuestionIndex((i) => i + 1)}
+            >
+              Próxima →
+            </button>
+          )}
         </div>
-
-        <button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="mt-6 bg-red-600 text-white px-4 py-2 rounded"
-        >
-          Finalizar prova
-        </button>
       </div>
     </>
   );

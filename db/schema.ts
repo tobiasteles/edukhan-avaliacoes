@@ -88,7 +88,7 @@ export const questionsRelations = relations(questions, ({ many, one }) => ({
     fields: [questions.examId],
     references: [exams.id],
   }),
-  options: many(questionOptions),
+  options: many(questionOptions), // Aqui diz que uma questão tem várias opções
   examAnswers: many(examAnswers),
 }));
 
@@ -105,7 +105,10 @@ export const questionOptions = pgTable("question_options", {
 export const questionOptionsRelations = relations(
   questionOptions,
   ({ one }) => ({
-    question: one(questions),
+    question: one(questions, {
+      fields: [questionOptions.questionId], // Campo na tabela question_options
+      references: [questions.id],          // Campo na tabela questions
+    }),
   })
 );
 
