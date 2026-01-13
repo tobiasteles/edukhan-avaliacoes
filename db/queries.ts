@@ -44,36 +44,65 @@ export const getExamsById = cache(async (examId: number) => {
 
 export const getExamsProgress = cache(async () => {
   const { userId } = await auth();
-
-  if (!userId) {
-    return null;
-  }
+  if (!userId) return null;
 
   const examsWithProgress = await db.query.exams.findMany({
     where: eq(exams.isActive, true),
     with: {
-      questions: true,
       examAttempts: {
         where: eq(examAttempts.studentId, userId),
+        orderBy: (examAttempts, { desc }) => [desc(examAttempts.startedAt)],
         with: {
-          examAnswers: true,
           examResults: true,
         },
       },
     },
   });
 
-  const firstUncompletedExam = examsWithProgress.find((exam) => {
-    const attempts = exam.examAttempts?.[0];
+  // Mapeia os dados para simplificar a vida do componente List
+  const formattedExams = examsWithProgress.map((exam) => {
+    const lastAttempt = exam.examAttempts?.[0];
+    
+    let status: "available" | "active" | "completed" = "available";
+    if (lastAttempt?.completedAt) status = "completed";
+    else if (lastAttempt) status = "active";
 
-    if (!attempts) return true;
-
-    if (!attempts.completedAt) {
-      return true;
-    }
-
-    return false
+    return {
+      ...exam,
+      status,
+      lastAttemptId: lastAttempt?.id,
+      score: lastAttempt?.examResults?.[0]?.score,
+    };
   });
 
-  return { examsWithProgress, firstUncompletedExam };
+  const firstUncompletedExam = formattedExams.find((e) => e.status !== "completed");
+
+  return { examsWithProgress: formattedExams, firstUncompletedExam };
+});
+
+export const getStudentStats = cache(async () => {
+  const { userId } = await auth();
+  if (!userId) return null;
+
+  const results = await db.query.examResults.findMany({
+    with: {
+      examAttempt: {
+        with: {
+          exam: true,
+        },
+      },
+    },
+    // Ordena pela data de conclusão para o gráfico fazer sentido
+    orderBy: (examResults, { asc }) => [asc(examResults.completedAt)],
+  });
+
+  // Formata os dados para o gráfico
+  const chartData = results.map((r) => ({
+    name: r.examAttempt.exam.title.substring(0, 10) + "...", 
+    score: r.score,
+    // Se quiser calcular porcentagem aqui:
+    // percentage: (r.score / r.examAttempt.exam.questions.length) * 100
+  }));
+
+  return { results, chartData };
 });

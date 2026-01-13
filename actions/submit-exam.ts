@@ -1,9 +1,9 @@
-// app/actions/submit-exam.ts
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import  db from "@/db/drizzle";
-import { eq, and } from "drizzle-orm";
+import db from "@/db/drizzle";
+// Adicionamos o inArray aqui nas importações
+import { eq, and, inArray } from "drizzle-orm"; 
 import { examAnswers, examAttempts, examResults, questionOptions } from "@/db/schema";
 
 interface SubmitAnswer {
@@ -34,29 +34,34 @@ export async function submitExam(attemptId: number, answers: SubmitAnswer[]) {
     throw new Error("Esta tentativa já foi finalizada");
   }
 
-  // Calcular pontuação
-  let score = 0;
-  
-  // Primeiro, salvar todas as respostas
-  for (const answer of answers) {
-    await db.insert(examAnswers).values({
-      examAttemptId: attemptId,
-      questionId: answer.questionId,
-      optionId: answer.optionId,
-    });
+  // --- INÍCIO DA OTIMIZAÇÃO EM LOTE ---
 
-    // Verificar se a resposta está correta
-    const correctOption = await db.query.questionOptions.findFirst({
-      where: and(
-        eq(questionOptions.id, answer.optionId),
-        eq(questionOptions.isCorrect, true)
-      ),
-    });
-
-    if (correctOption) {
-      score++;
-    }
+  // 1. Salvar todas as respostas de uma vez (Bulk Insert)
+  if (answers.length > 0) {
+    await db.insert(examAnswers).values(
+      answers.map((a) => ({
+        examAttemptId: attemptId,
+        questionId: a.questionId,
+        optionId: a.optionId,
+      }))
+    );
   }
+
+  // 2. Buscar as opções que são corretas dentre as que o usuário marcou
+  const userOptionIds = answers.map((a) => a.optionId);
+  
+  const correctSelections = await db.query.questionOptions.findMany({
+    where: and(
+      inArray(questionOptions.id, userOptionIds),
+      eq(questionOptions.isCorrect, true)
+    ),
+  });
+
+  // A pontuação é simplesmente o número de registros encontrados 
+  // (já que cada registro retornado é uma resposta correta do usuário)
+  const score = correctSelections.length;
+
+  // --- FIM DA OTIMIZAÇÃO ---
 
   // Marcar como finalizada
   const completedAt = new Date();
@@ -64,7 +69,7 @@ export async function submitExam(attemptId: number, answers: SubmitAnswer[]) {
     .set({ completedAt })
     .where(eq(examAttempts.id, attemptId));
 
-  // Salvar resultado
+  // Salvar resultado final na tabela de resultados
   await db.insert(examResults).values({
     examAttemptId: attemptId,
     score,

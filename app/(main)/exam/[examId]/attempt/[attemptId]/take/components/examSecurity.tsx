@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 
 interface ExamSecurityProps {
   onViolation: () => void;
@@ -9,72 +9,46 @@ interface ExamSecurityProps {
 
 export default function ExamSecurity({ onViolation, warnings }: ExamSecurityProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const lastViolationTime = useRef<number>(0);
 
-  // Prevenir cópia
+  // Corrigido: Função memorizada que gerencia o cooldown com segurança
+  const triggerViolation = useCallback(() => {
+    const now = Date.now();
+    // Se passaram menos de 2 segundos desde o último aviso, ignora
+    if (now - lastViolationTime.current > 2000) {
+      lastViolationTime.current = now;
+      onViolation();
+    }
+  }, [onViolation]);
+
   useEffect(() => {
-    const handleCopy = (e: ClipboardEvent) => {
-      e.preventDefault();
-      onViolation();
-      return false;
-    };
-
-    const handleCut = (e: ClipboardEvent) => {
-      e.preventDefault();
-      onViolation();
-      return false;
-    };
-
-    const handlePaste = (e: ClipboardEvent) => {
-      e.preventDefault();
-      onViolation();
-      return false;
-    };
-
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-      onViolation();
-      return false;
-    };
-
+    // 1. Bloqueio de Teclas e Cliques
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevenir DevTools e atalhos
-      if (e.key === 'F12' || 
-          (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
-          (e.ctrlKey && e.key === 'U') ||
-          (e.ctrlKey && e.shiftKey && e.key === 'C')) {
+      const isDevTools = e.key === 'F12' || 
+                         (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
+                         (e.ctrlKey && e.key === 'U');
+      
+      const isCopyPaste = (e.ctrlKey || e.metaKey) && 
+                          (e.key === 'c' || e.key === 'v' || e.key === 'x' || e.key === 'a');
+      
+      if (isDevTools || isCopyPaste || e.key === 'PrintScreen') {
         e.preventDefault();
-        onViolation();
-        return false;
-      }
-
-      // Prevenir Ctrl+C, Ctrl+V, Ctrl+X
-      if ((e.ctrlKey || e.metaKey) && 
-          (e.key === 'c' || e.key === 'v' || e.key === 'x' || e.key === 'a')) {
-        e.preventDefault();
-        onViolation();
-        return false;
-      }
-
-      if (e.key === 'PrintScreen') {
-        e.preventDefault();
-        onViolation();
-        return false;
+        triggerViolation();
       }
     };
 
-    const handleDragStart = (e: DragEvent) => {
+    const preventDefault = (e: Event) => {
       e.preventDefault();
-      return false;
+      triggerViolation();
     };
 
-    document.addEventListener('copy', handleCopy);
-    document.addEventListener('cut', handleCut);
-    document.addEventListener('paste', handlePaste);
-    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('copy', preventDefault);
+    document.addEventListener('cut', preventDefault);
+    document.addEventListener('paste', preventDefault);
+    document.addEventListener('contextmenu', preventDefault);
     document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('dragstart', handleDragStart);
 
-    // Entrar em tela cheia
+    // 2. Lógica de Tela Cheia
     const requestFullscreen = async () => {
       try {
         if (!document.fullscreenElement) {
@@ -82,85 +56,54 @@ export default function ExamSecurity({ onViolation, warnings }: ExamSecurityProp
           setIsFullscreen(true);
         }
       } catch (err) {
-        console.warn('Erro ao entrar em tela cheia:', err);
+        console.warn('Fullscreen bloqueado:', err);
       }
     };
 
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement) {
         setIsFullscreen(false);
-        onViolation();
-        requestFullscreen();
+        triggerViolation();
       } else {
         setIsFullscreen(true);
       }
     };
 
+    // 3. Lógica de Troca de Aba (Visibility)
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        onViolation();
+        triggerViolation();
         document.title = "⚠️ VOLTE PARA A PROVA!";
-        
-        setTimeout(() => {
-          document.title = "Exame em andamento";
-        }, 2000);
+      } else {
+        document.title = "Exame em andamento";
       }
-    };
-
-    const handleBlur = () => {
-      onViolation();
     };
 
     requestFullscreen();
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('blur', handleBlur);
-
-    // Detectar DevTools
-    const blockDevTools = () => {
-      const threshold = 160;
-      const checkDevTools = () => {
-        const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-        const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-        
-        if (widthThreshold || heightThreshold) {
-          onViolation();
-          window.location.reload();
-        }
-      };
-      
-      setInterval(checkDevTools, 1000);
-    };
-
-    blockDevTools();
 
     return () => {
-      document.removeEventListener('copy', handleCopy);
-      document.removeEventListener('cut', handleCut);
-      document.removeEventListener('paste', handlePaste);
-      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('copy', preventDefault);
+      document.removeEventListener('cut', preventDefault);
+      document.removeEventListener('paste', preventDefault);
+      document.removeEventListener('contextmenu', preventDefault);
       document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('dragstart', handleDragStart);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('blur', handleBlur);
-      
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      }
     };
-  }, [onViolation]);
+  }, [triggerViolation]);
 
   return (
-    <div className="fixed top-4 right-4 z-50">
-      <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-        <div className={`w-3 h-3 rounded-full ${isFullscreen ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+    <div className="fixed top-4 right-4 z-50 pointer-events-none select-none">
+      <div className="flex items-center gap-2 bg-white/90 border border-red-200 rounded-lg px-3 py-2 shadow-sm backdrop-blur-sm">
+        <div className={`w-3 h-3 rounded-full ${isFullscreen ? 'bg-green-500' : 'bg-yellow-500'} animate-pulse`}></div>
         <span className="text-sm font-medium text-red-700">
-          {isFullscreen ? 'Modo Prova Ativo' : 'Sistema de Segurança Ativo'}
+          {isFullscreen ? 'Monitoramento Ativo' : 'Ajuste a Tela Cheia'}
         </span>
         {warnings > 0 && (
-          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+          <span className="text-xs bg-red-600 text-white px-2 py-1 rounded-md font-bold">
             Avisos: {warnings}/3
           </span>
         )}

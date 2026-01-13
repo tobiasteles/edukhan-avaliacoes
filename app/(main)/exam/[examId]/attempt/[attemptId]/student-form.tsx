@@ -7,7 +7,7 @@ import { upsertStudent } from "@/actions/students";
 
 type Props = {
   examId: string;
-  attemptId: string;
+  attemptId?: string;
 };
 
 export default function StudentForm({ examId, attemptId }: Props) {

@@ -1,27 +1,39 @@
 "use client";
 
-import { examAttempts, exams } from "@/db/schema";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Card } from "./card";
 
-type Props = {
-  exams: (typeof exams.$inferSelect)[];
-  firstUncompletedExam?: typeof examAttempts.$inferSelect.examId;
+type Exam = {
+  id: number;
+  title: string;
+  status: "available" | "active" | "completed";
+  score?: number;
+  lastAttemptId?: number;
 };
 
-export const List = ({ exams, firstUncompletedExam }: Props) => {
+type Props = {
+  exams: Exam[];
+  firstUncompletedExamId?: number;
+};
+
+export const List = ({ exams, firstUncompletedExamId }: Props) => {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  const onClick = (examId: number) => {
+  const onClick = (examId: number, status: string, attemptId?: number) => {
     if (pending) return;
 
-      startTransition(() => {
-    // Simplesmente mande para a rota do exame. 
-    // A página do servidor decidirá se cria tentativa ou se vai pro form.
-    router.push(`/exam/${examId}`); 
-  });
+    startTransition(() => {
+      if (status === "completed" && attemptId) {
+        router.push(`/exam/${examId}/attempt/${attemptId}/result`);
+      } else if (status === "active" && attemptId) {
+        router.push(`/exam/${examId}/attempt/${attemptId}/take`);
+      } else {
+        // Envia para a rota pai do exame que fará a triagem do formulário
+        router.push(`/exam/${examId}`);
+      }
+    });
   };
 
   return (
@@ -31,8 +43,10 @@ export const List = ({ exams, firstUncompletedExam }: Props) => {
           key={exam.id}
           id={exam.id}
           title={exam.title}
-          onClick={onClick}
-          active={exam.id === firstUncompletedExam}
+          status={exam.status}
+          score={exam.score}
+          onClick={() => onClick(exam.id, exam.status, exam.lastAttemptId)}
+          active={exam.id === firstUncompletedExamId}
         />
       ))}
     </div>
