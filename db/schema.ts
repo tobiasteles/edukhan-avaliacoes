@@ -154,3 +154,10 @@ export const examAnswersRelations = relations(examAnswers, ({ one }) => ({
     references: [questionOptions.id],
   }),
 }));
+
+export const announcements = pgTable("announcements", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
