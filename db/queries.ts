@@ -3,11 +3,8 @@ import { cache } from "react";
 import db from "./drizzle";
 import { eq } from "drizzle-orm";
 import {
-  examAnswers,
   examAttempts,
-  examResults,
   exams,
-  questions,
   students,
 } from "./schema";
 
@@ -84,24 +81,37 @@ export const getStudentStats = cache(async () => {
   const { userId } = await auth();
   if (!userId) return null;
 
-  const results = await db.query.examResults.findMany({
+  // 1. Buscamos as tentativas do aluno que JÁ POSSUEM um resultado
+  const attempts = await db.query.examAttempts.findMany({
+    where: eq(examAttempts.studentId, userId),
     with: {
-      examAttempt: {
-        with: {
-          exam: true,
-        },
-      },
+      exam: true,
+      examResults: true, // Traz o resultado vinculado
     },
-    // Ordena pela data de conclusão para o gráfico fazer sentido
-    orderBy: (examResults, { asc }) => [asc(examResults.completedAt)],
+    orderBy: (examAttempts, { asc }) => [asc(examAttempts.completedAt)],
   });
 
-  // Formata os dados para o gráfico
+  // 2. Filtramos apenas as tentativas que foram concluídas (possuem resultado)
+  // e mapeamos para o formato que sua página espera
+  const results = attempts
+    .filter((attempt) => attempt.examResults && attempt.examResults.length > 0)
+    .map((attempt) => {
+      const result = attempt.examResults[0];
+      return {
+        ...result,
+        examAttempt: {
+          ...attempt,
+          exam: attempt.exam
+        }
+      };
+    });
+
+  // 3. Formata os dados para o gráfico
   const chartData = results.map((r) => ({
-    name: r.examAttempt.exam.title.substring(0, 10) + "...", 
+    name: r.examAttempt.exam.title.length > 10 
+      ? r.examAttempt.exam.title.substring(0, 10) + "..." 
+      : r.examAttempt.exam.title, 
     score: r.score,
-    // Se quiser calcular porcentagem aqui:
-    // percentage: (r.score / r.examAttempt.exam.questions.length) * 100
   }));
 
   return { results, chartData };

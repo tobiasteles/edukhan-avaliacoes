@@ -16,7 +16,12 @@ export const GET = async () => {
         }
     });
 
-    const formattedData = data.map(item => ({ ...item, id: item.id }));
+    const formattedData = data.map(item => ({ 
+    ...item, 
+    id: item.id,
+    // Criamos uma propriedade direta para facilitar a exibição no Admin
+    studentName: item.examAttempt?.students?.name || "Não encontrado"
+}));
     const total = formattedData.length;
 
     return new NextResponse(JSON.stringify(formattedData), {

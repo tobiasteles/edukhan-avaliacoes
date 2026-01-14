@@ -1,7 +1,7 @@
 "use server";
 
 import db from "@/db/drizzle";
-import { students } from "@/db/schema";
+import { examAttempts, students } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 type StudentInput = {
@@ -49,4 +49,15 @@ export async function upsertStudent(data: StudentInput) {
     city: data.city,
     state: data.state,
   });
+}
+
+export async function createExamAttempt(examId: number, userId: string) {
+  // Criamos a tentativa no banco de dados
+  const [newAttempt] = await db.insert(examAttempts).values({
+    examId: examId,
+    studentId: userId,
+    startedAt: new Date(),
+  }).returning();
+
+  return newAttempt.id;
 }

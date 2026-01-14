@@ -1,16 +1,12 @@
-import { Datagrid, DateField, List, NumberField, ReferenceField, TextField } from "react-admin";
+import { Datagrid, DateField, List, NumberField, TextField } from "react-admin";
 
 export const ExamResultList = () => (
     <List>
         <Datagrid rowClick="edit">
             <TextField source="id" />
             
-            {/* Buscamos o Aluno através da tentativa (examAttempt) */}
-            <ReferenceField source="examAttemptId" reference="exam_attempts" label="Aluno">
-                <ReferenceField source="userId" reference="students" label="Nome">
-                    <TextField source="name" />
-                </ReferenceField>
-            </ReferenceField>
+            {/* Usamos o campo que achatamos na rota da API */}
+            <TextField source="studentName" label="Aluno" />
 
             <NumberField source="score" label="Pontuação" />
             <DateField source="createdAt" label="Início" showTime />

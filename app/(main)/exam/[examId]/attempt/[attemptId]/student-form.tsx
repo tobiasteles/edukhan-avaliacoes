@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { upsertStudent } from "@/actions/students";
+import { createExamAttempt, upsertStudent } from "@/actions/students";
 
 type Props = {
   examId: string;
@@ -16,38 +16,45 @@ export default function StudentForm({ examId, attemptId }: Props) {
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  e.preventDefault();
+  if (!userId) return;
 
-    if (!userId) {
-      alert("Usuário não autenticado");
-      return;
+  setLoading(true);
+  const formData = new FormData(e.currentTarget);
+
+  try {
+    // 1. Salva ou atualiza os dados do aluno
+    await upsertStudent({
+      userId,
+      name: String(formData.get("name")),
+      age: Number(formData.get("age")),
+      grade: Number(formData.get("grade")),
+      schoolName: String(formData.get("school")),
+      unit: String(formData.get("unit")),
+      city: String(formData.get("city")),
+      state: String(formData.get("state")),
+    });
+
+    // 2. Definimos qual ID de tentativa usar
+    let finalAttemptId = attemptId;
+
+    // Se não recebemos um attemptId via props, criamos um agora
+    if (!finalAttemptId || finalAttemptId === "undefined") {
+      const newId = await createExamAttempt(Number(examId), userId);
+      finalAttemptId = String(newId);
     }
 
-    setLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-
-    try {
-      await upsertStudent({
-        userId,
-        name: String(formData.get("name")),
-        age: Number(formData.get("age")),
-        grade: Number(formData.get("grade")),
-        schoolName: String(formData.get("school")),
-        unit: String(formData.get("unit")),
-        city: String(formData.get("city")),
-        state: String(formData.get("state")),
-      });
-
-      router.refresh(); // Limpa o cache do Next.js
-      router.push(`/exam/${examId}/attempt/${attemptId}/take`);
-    } catch (error) {
-      console.error(error);
-      alert("Erro ao salvar os dados do aluno");
-    } finally {
-      setLoading(false);
-    }
+    // 3. Redirecionamento forçado para a página da prova
+    // Usamos o window.location.assign se o router.push falhar em rotas dinâmicas pesadas
+    router.push(`/exam/${examId}/attempt/${finalAttemptId}/take`);
+    
+  } catch (error) {
+    console.error("Erro no formulário:", error);
+    alert("Erro ao iniciar a prova. Verifique seus dados.");
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto">
