@@ -16,6 +16,7 @@ interface ExamComponentProps {
     questions: Array<{
       id: number;
       content: string;
+      imageSrc?: string;
       options: Array<{
         id: number;
         content: string;
@@ -33,7 +34,7 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
   const handleSubmitRef = useRef<(() => Promise<void>) | null>(null);
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  
+
   const initialAnswers = useMemo(() => {
     const initial: AnswerState = {};
     // Usamos o ?. para prevenir erro caso questions seja undefined
@@ -44,7 +45,7 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
   }, [exam.questions]);
 
   const [answers, setAnswers] = useState<AnswerState>(initialAnswers);
-  const [timeLeft, setTimeLeft] = useState(60 * 60); 
+  const [timeLeft, setTimeLeft] = useState(60 * 60);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [warnings, setWarnings] = useState(0);
 
@@ -53,7 +54,7 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
   const totalQuestions = exam.questions.length;
 
   const answeredQuestions = Object.values(answers).filter(
-    (v) => v !== null
+    (v) => v !== null,
   ).length;
 
   // --- HANDLERS ---
@@ -122,10 +123,15 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
   if (totalQuestions === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-6">
-        <h2 className="text-2xl font-bold mb-2">Ops! Nenhuma questão encontrada.</h2>
-        <p className="text-neutral-500 mb-6">Esta prova ainda não possui perguntas cadastradas ou houve um erro no carregamento.</p>
-        <button 
-          onClick={() => router.push("/dashboard")} 
+        <h2 className="text-2xl font-bold mb-2">
+          Ops! Nenhuma questão encontrada.
+        </h2>
+        <p className="text-neutral-500 mb-6">
+          Esta prova ainda não possui perguntas cadastradas ou houve um erro no
+          carregamento.
+        </p>
+        <button
+          onClick={() => router.push("/dashboard")}
           className="bg-black text-white px-6 py-2 rounded-lg font-medium"
         >
           Voltar ao Painel
@@ -160,7 +166,20 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
           <h2 className="font-bold text-lg mb-4 text-blue-700">
             Questão {currentQuestionIndex + 1}
           </h2>
-          <p className="text-xl mb-6 leading-relaxed">{currentQuestion.content}</p>
+          <p className="text-xl mb-6 leading-relaxed">
+            {currentQuestion.content}
+          </p>
+          {/* Imagem da questão */}
+          {currentQuestion.imageSrc && (
+            <div className="mb-6 relative w-full h-75">
+              <Image
+                src={currentQuestion.imageSrc}
+                alt="Ilustração da questão"
+                fill
+                className="rounded-xl object-contain"
+              />
+            </div>
+          )}
 
           <div className="grid gap-3">
             {currentQuestion.options.map((opt) => {
@@ -177,20 +196,26 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${selected ? "border-blue-600" : "border-neutral-300"}`}>
-                        {selected && <div className="h-2.5 w-2.5 bg-blue-600 rounded-full" />}
+                    <div
+                      className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${selected ? "border-blue-600" : "border-neutral-300"}`}
+                    >
+                      {selected && (
+                        <div className="h-2.5 w-2.5 bg-blue-600 rounded-full" />
+                      )}
                     </div>
-                    <p className="font-medium text-neutral-800">{opt.content}</p>
+                    <p className="font-medium text-neutral-800">
+                      {opt.content}
+                    </p>
                   </div>
 
                   {opt.imageSrc && (
                     <div className="mt-4 relative w-full h-48">
-                        <Image
-                          src={opt.imageSrc}
-                          alt="Opção"
-                          fill
-                          className="rounded-lg object-contain"
-                        />
+                      <Image
+                        src={opt.imageSrc}
+                        alt="Opção"
+                        fill
+                        className="rounded-lg object-contain"
+                      />
                     </div>
                   )}
                 </div>
@@ -209,13 +234,13 @@ export default function ExamComponent({ exam, attempt }: ExamComponentProps) {
           </button>
 
           {currentQuestionIndex === totalQuestions - 1 ? (
-             <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="bg-green-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-green-700 disabled:opacity-50"
-             >
-               {isSubmitting ? "Enviando..." : "Finalizar Prova"}
-             </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="bg-green-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-green-700 disabled:opacity-50"
+            >
+              {isSubmitting ? "Enviando..." : "Finalizar Prova"}
+            </button>
           ) : (
             <button
               className="px-6 py-2 bg-neutral-800 text-white rounded-lg font-semibold"

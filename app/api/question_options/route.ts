@@ -29,6 +29,7 @@ export const POST = async (req: Request) => {
             questionId: Number(body.questionId),
             content: body.text,
             isCorrect: Boolean(body.isCorrect),
+            imageSrc: body.imageSrc,
         }).returning();
 
         return NextResponse.json({ ...newOption, id: newOption.id }, { status: 201 });

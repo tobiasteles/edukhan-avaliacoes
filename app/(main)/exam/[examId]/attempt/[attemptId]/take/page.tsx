@@ -58,6 +58,7 @@ export default async function TakeExamPage({ params }: Props) {
         questions: exam.questions.map(q => ({
           id: q.id,
           content: q.content,
+          imageSrc: q.imageSrc ?? undefined,
           options: q.options.map(o => ({
             id: o.id,
             content: o.content,

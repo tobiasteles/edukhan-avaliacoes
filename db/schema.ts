@@ -80,6 +80,7 @@ export const questions = pgTable("questions", {
     .references(() => exams.id, { onDelete: "cascade" }),
   type: questionsEnum("type").notNull(),
   content: text("content").notNull(),
+  imageSrc: text("image_src"),
   order: integer("order").notNull(),
 });
 

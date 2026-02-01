@@ -7,6 +7,7 @@ import {
     ReferenceInput,
     NumberInput
 } from "react-admin";
+import { UploadButtonCustom } from "../components/uploadButtonCustom";
 
 // --- EDIÇÃO ---
 export const QuestionEdit = () => (
@@ -20,6 +21,7 @@ export const QuestionEdit = () => (
                 fullWidth 
                 multiline 
             />
+            <UploadButtonCustom source="imageSrc" label="Imagem do Enunciado (Gráfico/Figura)" />
             <SelectInput
                 label="Tipo"
                 source="type"

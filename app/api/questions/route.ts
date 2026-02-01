@@ -32,6 +32,7 @@ export const POST = async (req: Request) => {
             type: body.type,
             examId: Number(body.examId), // Garante que o ID do exame seja número
             order: Number(body.order),   // Garante que a ordem seja número
+            imageSrc: body.imageSrc,
         }).returning();
 
         return NextResponse.json({ ...newQuestion, id: newQuestion.id }, { status: 201 });

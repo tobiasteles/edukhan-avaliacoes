@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import db from "@/db/drizzle";
-import { exams, examAttempts, students } from "@/db/schema";
+import { examAttempts, students } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 
 type Props = {

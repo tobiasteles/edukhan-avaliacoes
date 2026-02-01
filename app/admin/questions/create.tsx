@@ -8,6 +8,7 @@ import {
     TextInput,    // Importe o TextInput
     // Importe o NumberInput para campos numéricos
 } from "react-admin";
+import { UploadButtonCustom } from "../components/uploadButtonCustom";
 
 export const QuestionCreate = () => (
     <Create>
@@ -19,6 +20,7 @@ export const QuestionCreate = () => (
                 fullWidth 
                 multiline 
             />
+            <UploadButtonCustom source="imageSrc" label="Imagem do Enunciado (Gráfico/Figura)" />
             <SelectInput
                 label="Tipo da questão"
                 source="type"

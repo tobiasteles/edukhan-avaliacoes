@@ -7,6 +7,7 @@ import {
     ReferenceInput,
     BooleanInput
 } from "react-admin";
+import { UploadButtonCustom } from "../components/uploadButtonCustom";
 
 // --- EDIÇÃO ---
 export const OptionEdit = () => (
@@ -16,7 +17,8 @@ export const OptionEdit = () => (
             <ReferenceInput source="questionId" reference="questions">
                 <SelectInput optionText="content" fullWidth />
             </ReferenceInput>
-            <TextInput source="text" label="Texto da Alternativa" validate={[required()]} fullWidth />
+            <TextInput source="content" label="Texto da Alternativa" validate={[required()]} fullWidth />
+            <UploadButtonCustom source="imageSrc" label="Imagem da Alternativa (Opcional)" />
             <BooleanInput source="isCorrect" label="Resposta correta" />
         </SimpleForm>
     </Edit>
