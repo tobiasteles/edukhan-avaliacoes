@@ -27,13 +27,14 @@ export const POST = async (req: Request) => {
 
         const [newOption] = await db.insert(questionOptions).values({
             questionId: Number(body.questionId),
-            content: body.text,
+            content: body.content,
             isCorrect: Boolean(body.isCorrect),
             imageSrc: body.imageSrc,
         }).returning();
 
         return NextResponse.json({ ...newOption, id: newOption.id }, { status: 201 });
-    } catch {
+    } catch (error) {
+        console.error(error);
         return NextResponse.json({ error: "Erro ao criar opção" }, { status: 400 });
     }
 };
