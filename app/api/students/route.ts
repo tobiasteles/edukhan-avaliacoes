@@ -39,7 +39,7 @@ export const POST = async (req: Request) => {
     const data = await db.insert(students).values({
       userId: body.userId, // Garante que o ID digitado no form vá para o banco
       name: body.name,
-      age: Number(body.age),
+      birthDate: "",
       grade: body.grade,
       schoolName: body.schoolName,
       unit: body.unit,

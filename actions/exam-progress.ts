@@ -38,7 +38,7 @@ export const upsertExamProgress = async (examId: number) => {
       userId,
       name: user.firstName || "Usuário não informado",
       userImageSrc: user.imageUrl || "/user.png",
-      age: 0,
+      birthDate: "",
       grade: 0,
       schoolName: "",
       unit: "",

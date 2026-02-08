@@ -38,7 +38,7 @@ export const PUT = async (req: Request, { params }: Props) => {
     .set({
       ...updateData,
       // Garante que campos numéricos sejam tratados corretamente
-      age: updateData.age ? Number(updateData.age) : undefined,
+      birthDate: updateData.birthDate || "",
       grade: updateData.grade ? Number(updateData.grade) : undefined,
     })
     .where(eq(students.userId, studentId))
