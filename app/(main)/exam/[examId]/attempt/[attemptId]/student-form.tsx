@@ -26,11 +26,11 @@ export default function StudentForm({ examId, attemptId }: Props) {
     const formData = new FormData(e.currentTarget);
 
     try {
-      // 1. Salva ou atualiza os dados do aluno no banco
+      // 1. Salva os dados (trocado age por birthDate)
       await upsertStudent({
         userId,
         name: String(formData.get("name")),
-        age: Number(formData.get("age")),
+        birthDate: String(formData.get("birthDate")), // Enviando a string da data
         grade: Number(formData.get("grade")),
         schoolName: String(formData.get("school")),
         unit: String(formData.get("unit")),
@@ -38,31 +38,39 @@ export default function StudentForm({ examId, attemptId }: Props) {
         state: String(formData.get("state")),
       });
 
-      // 2. Define qual ID de tentativa usar
       let finalAttemptId = attemptId;
 
-      // Se não recebemos um attemptId via props ou se ele for inválido, criamos um novo
+      // 2. Garantir que temos um attemptId válido
       if (!finalAttemptId || finalAttemptId === "undefined") {
-        const newId = await createExamAttempt(Number(examId), userId);
-        finalAttemptId = String(newId);
+        // O result aqui deve ser apenas o ID (string ou number)
+        const result = await createExamAttempt(Number(examId), userId);
+        finalAttemptId = String(result);
       }
 
-      // 3. Redirecionamento para a página da prova
-      router.push(`/exam/${examId}/attempt/${finalAttemptId}/take`);
-      router.refresh(); 
-      
+      // 3. Redirecionamento direto
+      // Use window.location.assign se o router.push falhar, mas o push deve funcionar:
+      const destination = `/exam/${examId}/attempt/${finalAttemptId}/take`;
+
+      console.log("Redirecionando para:", destination);
+      router.push(destination);
     } catch (error) {
       console.error("Erro no formulário:", error);
-      alert("Erro ao iniciar a prova. Verifique seus dados.");
+      alert("Erro ao iniciar a prova. Verifique sua conexão.");
     } finally {
-      setLoading(false);
+      // Não setamos loading(false) aqui se o redirecionamento for bem sucedido
+      // para evitar que o botão volte ao estado normal enquanto a página troca.
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto p-6 bg-white rounded-xl shadow-md border border-neutral-200">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 max-w-md mx-auto p-6 bg-white rounded-xl shadow-md border border-neutral-200"
+    >
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-neutral-700">Nome completo</label>
+        <label className="text-sm font-semibold text-neutral-700">
+          Nome completo
+        </label>
         <input
           name="name"
           required
@@ -73,36 +81,33 @@ export default function StudentForm({ examId, attemptId }: Props) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-neutral-700">Idade</label>
+          <label className="text-sm font-semibold text-neutral-700">
+            Data de Nascimento
+          </label>
           <input
-            name="age"
-            type="number"
+            name="birthDate"
+            type="date"
             required
-            placeholder="Ex: 12"
             className="w-full border border-neutral-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-neutral-700">Série / Ano</label>
-          <select 
-            name="grade" 
-            required 
+          <label className="text-sm font-semibold text-neutral-700">
+            Série / Ano
+          </label>
+          <select
+            name="grade"
+            required
             className="w-full border border-neutral-300 p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none transition"
           >
             <option value="">Selecione...</option>
-            <optgroup label="Ensino Fundamental - Iniciais">
-              <option value="1">1º Ano</option>
-              <option value="2">2º Ano</option>
-              <option value="3">3º Ano</option>
-              <option value="4">4º Ano</option>
-              <option value="5">5º Ano</option>
-            </optgroup>
-            <optgroup label="Ensino Fundamental - Finais">
-              <option value="6">6º Ano</option>
-              <option value="7">7º Ano</option>
-              <option value="8">8º Ano</option>
-              <option value="9">9º Ano</option>
+            <optgroup label="Ensino Fundamental">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
+                <option key={i} value={i}>
+                  {i}º Ano
+                </option>
+              ))}
             </optgroup>
             <optgroup label="Ensino Médio">
               <option value="10">1ª Série EM</option>
@@ -113,6 +118,7 @@ export default function StudentForm({ examId, attemptId }: Props) {
         </div>
       </div>
 
+      {/* Outros campos de Escola, Unidade, etc permanecem iguais... */}
       <div className="space-y-2">
         <label className="text-sm font-semibold text-neutral-700">Escola</label>
         <input
@@ -122,20 +128,23 @@ export default function StudentForm({ examId, attemptId }: Props) {
           className="w-full border border-neutral-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
         />
       </div>
-
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-neutral-700">Unidade</label>
+        <label className="text-sm font-semibold text-neutral-700">
+          Unidade / Projeto
+        </label>
         <input
           name="unit"
           required
-          placeholder="Ex: Associação Viver"
+          placeholder="Ex: Associação Viver ou Unidade Centro"
           className="w-full border border-neutral-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-neutral-700">Cidade</label>
+          <label className="text-sm font-semibold text-neutral-700">
+            Cidade
+          </label>
           <input
             name="city"
             required
@@ -144,12 +153,15 @@ export default function StudentForm({ examId, attemptId }: Props) {
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-neutral-700">Estado</label>
+          <label className="text-sm font-semibold text-neutral-700">
+            Estado
+          </label>
           <input
             name="state"
             required
             placeholder="Ex: SP"
-            className="w-full border border-neutral-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+            maxLength={2}
+            className="w-full border border-neutral-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition uppercase"
           />
         </div>
       </div>
@@ -157,7 +169,7 @@ export default function StudentForm({ examId, attemptId }: Props) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transform active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed mt-4"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transform active:scale-[0.98] transition disabled:opacity-60 mt-4"
       >
         {loading ? "Iniciando prova..." : "Começar prova agora"}
       </button>

@@ -12,7 +12,7 @@ import {
 export const students = pgTable("students", {
   userId: text("user_id").primaryKey(),
   name: text("name").notNull(),
-  age: integer("age").notNull(),
+  birthDate: text("birth_date"),
   grade: integer("grade").notNull(),
   schoolName: text("school_name").notNull(),
   unit: text("unit").notNull(),
