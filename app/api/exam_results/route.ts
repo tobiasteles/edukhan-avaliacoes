@@ -6,22 +6,25 @@ import { desc } from "drizzle-orm";
 export const GET = async () => {
     const data = await db.query.examResults.findMany({
         orderBy: [desc(examResults.id)],
-        // Inclui a tentativa e o aluno para o React Admin poder mostrar o nome
+        // Inclui a tentativa, o aluno E a prova agora
         with: {
             examAttempt: {
                 with: {
-                    students: true 
+                    students: true,
+                    exam: true // <--- ADICIONE ISSO AQUI
                 }
             }
         }
     });
 
     const formattedData = data.map(item => ({ 
-    ...item, 
-    id: item.id,
-    // Criamos uma propriedade direta para facilitar a exibição no Admin
-    studentName: item.examAttempt?.students?.name || "Não encontrado"
-}));
+        ...item, 
+        id: item.id,
+        studentName: item.examAttempt?.students?.name || "Não encontrado",
+        // Criamos a propriedade para o título da prova
+        examTitle: item.examAttempt?.exam?.title || "Prova não encontrada" // <--- ADICIONE ISSO AQUI
+    }));
+
     const total = formattedData.length;
 
     return new NextResponse(JSON.stringify(formattedData), {

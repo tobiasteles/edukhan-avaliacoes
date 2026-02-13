@@ -5,7 +5,8 @@ export const ExamResultList = () => (
         <Datagrid rowClick="edit">
             <TextField source="id" />
             
-            {/* Usamos o campo que achatamos na rota da API */}
+            {/* Agora mostramos a Prova e o Aluno */}
+            <TextField source="examTitle" label="Prova" /> 
             <TextField source="studentName" label="Aluno" />
 
             <NumberField source="score" label="Pontuação" />
