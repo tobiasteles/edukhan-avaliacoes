@@ -1,7 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 
 const adminIds = [
-    "user_37UdggT9NxfKCEdpDJ0bIpmcYbw"
+    "user_37UdggT9NxfKCEdpDJ0bIpmcYbw",
+    "user_3B5xJWQ0MleZXmnEPyiUuvtO0ka"
 ]
 
 export const getIsAdmin = async () => {
