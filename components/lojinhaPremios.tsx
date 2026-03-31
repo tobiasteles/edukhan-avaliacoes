@@ -1,102 +1,144 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Gift, Star, ShoppingBag, Loader2 } from "lucide-react";
+import { Gift, Star, ShoppingBag, Loader2, AlertCircle } from "lucide-react";
 
+// Interface ajustada para os campos reais do seu banco (vimos no seu JSON)
 interface Premio {
   id: string;
   nome: string;
   valor: number;
-  quantidade: number; // MUDADO: No seu JSON está "quantidade", não "estoque"
-  imagemUrl: string | null;
+  quantidade: number; // Campo correto vindo do banco
+  imagemUrl: string | null; // Campo que traz o Base64 da imagem
   unidadeId: string;
 }
 
 export function LojinhaPremios() {
   const [premios, setPremios] = useState<Premio[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Busca os dados da API oficial
-    fetch("https://sga.edukhan.ong.br/api/premios", {
+  const fetchPremios = async () => {
+    try {
+      // Usamos a URL completa e forçamos o modo 'cors'
+      const response = await fetch("https://sga.edukhan.ong.br/api/premios", {
         method: 'GET',
-        mode: 'cors', // Garante que o navegador tente o acesso cross-origin
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Erro ao acessar API");
-        return res.json();
-      })
-      .then((data) => {
-        setPremios(Array.isArray(data) ? data : []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Erro na Lojinha:", err);
-        setError(true);
-        setLoading(false);
+        mode: 'cors', // Crucial para chamadas entre domínios diferentes
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
-  }, []);
 
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setPremios(data);
+    } catch (err) {
+      console.error("Erro na Lojinha:", err);
+      setError("Não foi possível carregar os prêmios.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchPremios();
+}, []);
+
+  // 1. Tela de Carregamento
   if (loading) {
     return (
-      <div className="p-20 text-center font-mono flex flex-col items-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-xs uppercase tracking-widest">Sincronizando prêmios...</p>
+      <div className="flex flex-col items-center justify-center p-20 space-y-4 bg-slate-50/50 rounded-xl border-2 border-dashed">
+        <Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" />
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+          Sincronizando com Point Bank...
+        </p>
       </div>
     );
   }
 
+  // 2. Tela de Erro (se o 404 persistir)
   if (error) {
     return (
-      <div className="p-10 text-center font-mono border-2 border-dashed border-red-200 rounded-xl">
-        <p className="text-red-500 text-xs uppercase font-bold">Erro de conexão com o servidor de prêmios.</p>
-        <p className="text-[10px] text-muted-foreground mt-2">Verifique o link da API ou as permissões de CORS.</p>
+      <div className="p-10 text-center border-2 border-red-100 bg-red-50/30 rounded-xl">
+        <AlertCircle className="h-10 w-10 text-red-400 mx-auto mb-3" />
+        <p className="text-xs font-bold text-red-600 uppercase">Falha na Conexão</p>
+        <p className="text-[10px] text-red-400 uppercase mt-1">{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 px-4 py-2 bg-red-100 text-red-700 text-[10px] font-bold rounded-lg hover:bg-red-200 transition-colors"
+        >
+          Tentar Novamente
+        </button>
       </div>
     );
   }
 
+  // 3. Vitrine Principal
   return (
-    <div className="p-6 space-y-6 font-mono">
-      <div className="flex items-center gap-2 border-b pb-4">
-        <ShoppingBag className="text-primary h-5 w-5" />
-        <h2 className="text-lg font-bold uppercase">Vitrine de Prêmios</h2>
+    <div className="p-6 space-y-8 font-mono bg-white rounded-2xl shadow-sm border border-slate-100">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-primary/10 rounded-xl">
+            <ShoppingBag className="text-primary h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-black uppercase leading-tight">Lojinha Edukhan</h2>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Troque seus Pontos Khan Academy</p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {premios.map((item) => (
-          <div key={item.id} className="border-2 border-slate-100 rounded-xl p-4 bg-white hover:border-primary/50 hover:shadow-lg transition-all group flex flex-col">
-            
-            {/* ÁREA DA IMAGEM (Tratando Base64) */}
-            <div className="h-40 bg-slate-50 rounded-lg mb-4 overflow-hidden flex items-center justify-center border">
-              {item.imagemUrl ? (
-                <img 
-                  src={item.imagemUrl} 
-                  alt={item.nome} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
-                />
-              ) : (
-                <Gift className="h-10 w-10 text-slate-300" />
-              )}
-            </div>
-            
-            <h3 className="font-bold text-sm uppercase mb-1 flex-grow">{item.nome}</h3>
-            
-            <div className="flex items-center justify-between mt-4">
-              <div className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-black border border-yellow-200">
-                <Star className="h-3 w-3 fill-yellow-600 text-yellow-600" />
-                {item.valor.toLocaleString('pt-BR')} PTS
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {premios.length > 0 ? (
+          premios.map((item) => (
+            <div key={item.id} className="group flex flex-col border border-slate-100 rounded-2xl p-4 hover:shadow-xl hover:border-primary/20 transition-all bg-card">
+              
+              {/* Espaço da Imagem (Suporta Base64) */}
+              <div className="aspect-square bg-slate-50 rounded-xl mb-4 overflow-hidden flex items-center justify-center border border-slate-50 relative">
+                {item.imagemUrl ? (
+                  <img 
+                    src={item.imagemUrl} 
+                    alt={item.nome} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                  />
+                ) : (
+                  <Gift className="h-12 w-12 text-slate-200" />
+                )}
+                {item.quantidade <= 2 && (
+                  <span className="absolute top-2 right-2 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-md uppercase">
+                    Últimas unidades
+                  </span>
+                )}
               </div>
-              <span className="text-[10px] text-muted-foreground uppercase font-bold">
-                {item.quantidade} em estoque
-              </span>
-            </div>
+              
+              <h3 className="font-bold text-xs uppercase mb-1 truncate text-slate-800">{item.nome}</h3>
+              
+              <div className="flex items-center justify-between mt-auto pt-4">
+                <div className="flex items-center gap-1.5 bg-yellow-50 text-yellow-700 px-3 py-1.5 rounded-full border border-yellow-200 text-[10px] font-black">
+                  <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
+                  {item.valor.toLocaleString('pt-BR')} PTS
+                </div>
+                <div className="text-right">
+                  <span className="block text-[9px] font-black text-slate-400 uppercase">Estoque</span>
+                  <span className="text-[10px] font-bold text-slate-600">{item.quantidade} un.</span>
+                </div>
+              </div>
 
-            <button className="w-full mt-4 py-2.5 bg-slate-900 text-white text-[10px] font-black rounded-lg uppercase hover:bg-primary transition-colors">
-              Como Resgatar?
-            </button>
+              <button className="w-full mt-5 py-3 bg-slate-900 text-white hover:bg-primary text-[10px] font-black rounded-xl uppercase transition-all shadow-sm active:scale-95">
+                Solicitar Resgate
+              </button>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full py-20 text-center border-2 border-dashed rounded-2xl">
+            <Gift className="h-12 w-12 text-slate-200 mx-auto mb-4" />
+            <p className="text-xs font-bold uppercase text-slate-400">Nenhum prêmio disponível agora.</p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
