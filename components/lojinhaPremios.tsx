@@ -26,9 +26,6 @@ export function LojinhaPremios() {
         method: 'GET',
         mode: 'cors', // Crucial para chamadas entre domínios diferentes
         cache: 'no-store',
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
 
       if (!response.ok) {
