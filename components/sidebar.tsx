@@ -31,6 +31,7 @@ export const Sidebar = ({ className }: Props) => {
         <SidebarItem label="Painel" href="/dashboard" icon={LayoutDashboard} />
         <SidebarItem label="Progresso" href="/progress" icon={BarChart3} />
         <SidebarItem label="Anúncios" href="/announcements" icon={Megaphone} />
+        <SidebarItem label="Lojinha" href="/pointBank" icon={Megaphone} />
       </div>
       <div className="p-4">
         <ClerkLoading>
