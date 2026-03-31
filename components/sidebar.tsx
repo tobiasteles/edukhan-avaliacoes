@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SidebarItem } from "./sidebar-item";
 import { ClerkLoaded, ClerkLoading, UserButton } from "@clerk/nextjs";
-import { BarChart3,  LayoutDashboard, Loader, Megaphone } from "lucide-react";
+import { BarChart3,  LayoutDashboard, Loader, Megaphone, ShoppingBag } from "lucide-react";
 
 type Props = {
   className?: string;
@@ -31,7 +31,7 @@ export const Sidebar = ({ className }: Props) => {
         <SidebarItem label="Painel" href="/dashboard" icon={LayoutDashboard} />
         <SidebarItem label="Progresso" href="/progress" icon={BarChart3} />
         <SidebarItem label="Anúncios" href="/announcements" icon={Megaphone} />
-        <SidebarItem label="Lojinha" href="/pointBank" icon={Megaphone} />
+        <SidebarItem label="Lojinha" href="/pointBank" icon={ShoppingBag} />
       </div>
       <div className="p-4">
         <ClerkLoading>

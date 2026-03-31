@@ -1,142 +1,117 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Gift, Star, ShoppingBag, Loader2, AlertCircle } from "lucide-react";
+import { Gift, Star, Loader2, AlertCircle, MapPin } from "lucide-react";
 
-// Interface ajustada para os campos reais do seu banco (vimos no seu JSON)
 interface Premio {
   id: string;
   nome: string;
   valor: number;
-  quantidade: number; // Campo correto vindo do banco
-  imagemUrl: string | null; // Campo que traz o Base64 da imagem
+  quantidade: number;
+  imagemUrl: string | null;
   unidadeId: string;
 }
 
 export function LojinhaPremios() {
-  const [premios, setPremios] = useState<Premio[]>([]);
+  const [premiosPorUnidade, setPremiosPorUnidade] = useState<Record<string, Premio[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-  const fetchPremios = async () => {
-    try {
-      // Usamos a URL completa e forçamos o modo 'cors'
-      const response = await fetch("https://sga.edukhan.ong.br/api/premios", {
-        method: 'GET',
-        mode: 'cors', // Crucial para chamadas entre domínios diferentes
-        cache: 'no-store',
-      });
+    const fetchPremios = async () => {
+      try {
+        const response = await fetch("https://sga.edukhan.ong.br/api/premios", {
+          method: 'GET',
+          mode: 'cors',
+          cache: 'no-store',
+        });
 
-      if (!response.ok) {
-        throw new Error(`Erro HTTP: ${response.status}`);
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+
+        const data: Premio[] = await response.json();
+
+        // LÓGICA DE AGRUPAMENTO: Transforma a lista simples em um objeto separado por Unidade
+        const agrupados = data.reduce((acc, premio) => {
+          const unidade = premio.unidadeId || "Geral";
+          if (!acc[unidade]) acc[unidade] = [];
+          acc[unidade].push(premio);
+          return acc;
+        }, {} as Record<string, Premio[]>);
+
+        setPremiosPorUnidade(agrupados);
+      } catch (err) {
+        console.error("Erro na Lojinha:", err);
+        setError("Não foi possível carregar os prêmios.");
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const data = await response.json();
-      setPremios(data);
-    } catch (err) {
-      console.error("Erro na Lojinha:", err);
-      setError("Não foi possível carregar os prêmios.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchPremios();
+  }, []);
 
-  fetchPremios();
-}, []);
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center p-20 bg-slate-50/50 rounded-xl border-2 border-dashed">
+      <Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" />
+      <p className="text-[10px] font-black uppercase tracking-widest mt-4">Sincronizando unidades...</p>
+    </div>
+  );
 
-  // 1. Tela de Carregamento
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center p-20 space-y-4 bg-slate-50/50 rounded-xl border-2 border-dashed">
-        <Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" />
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-          Sincronizando com Point Bank...
-        </p>
-      </div>
-    );
-  }
+  if (error) return (
+    <div className="p-10 text-center border-2 border-red-100 bg-red-50/30 rounded-xl font-mono text-[10px]">
+       <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-2" />
+       <p className="font-bold text-red-600 uppercase">Erro de Conexão</p>
+       <button onClick={() => window.location.reload()} className="mt-2 text-red-500 underline uppercase">Tentar de novo</button>
+    </div>
+  );
 
-  // 2. Tela de Erro (se o 404 persistir)
-  if (error) {
-    return (
-      <div className="p-10 text-center border-2 border-red-100 bg-red-50/30 rounded-xl">
-        <AlertCircle className="h-10 w-10 text-red-400 mx-auto mb-3" />
-        <p className="text-xs font-bold text-red-600 uppercase">Falha na Conexão</p>
-        <p className="text-[10px] text-red-400 uppercase mt-1">{error}</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-red-100 text-red-700 text-[10px] font-bold rounded-lg hover:bg-red-200 transition-colors"
-        >
-          Tentar Novamente
-        </button>
-      </div>
-    );
-  }
-
-  // 3. Vitrine Principal
   return (
-    <div className="p-6 space-y-8 font-mono bg-white rounded-2xl shadow-sm border border-slate-100">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-5">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-primary/10 rounded-xl">
-            <ShoppingBag className="text-primary h-5 w-5" />
+    <div className="space-y-12 font-mono">
+      {Object.entries(premiosPorUnidade).map(([unidade, lista]) => (
+        <section key={unidade} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+          
+          {/* CABEÇALHO DA UNIDADE */}
+          <div className="flex items-center gap-2 mb-6 border-b pb-4">
+            <MapPin className="text-primary h-4 w-4" />
+            <h2 className="text-sm font-black uppercase tracking-tighter">
+              Unidade: <span className="text-primary">{unidade}</span>
+            </h2>
+            <span className="ml-auto text-[10px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500">
+              {lista.length} ITENS
+            </span>
           </div>
-          <div>
-            <h2 className="text-lg font-black uppercase leading-tight">Lojinha Edukhan</h2>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Troque seus Pontos Khan Academy</p>
-          </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {premios.length > 0 ? (
-          premios.map((item) => (
-            <div key={item.id} className="group flex flex-col border border-slate-100 rounded-2xl p-4 hover:shadow-xl hover:border-primary/20 transition-all bg-card">
-              
-              {/* Espaço da Imagem (Suporta Base64) */}
-              <div className="aspect-square bg-slate-50 rounded-xl mb-4 overflow-hidden flex items-center justify-center border border-slate-50 relative">
-                {item.imagemUrl ? (
-                  <img 
-                    src={item.imagemUrl} 
-                    alt={item.nome} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                  />
-                ) : (
-                  <Gift className="h-12 w-12 text-slate-200" />
-                )}
-                {item.quantidade <= 2 && (
-                  <span className="absolute top-2 right-2 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-md uppercase">
-                    Últimas unidades
-                  </span>
-                )}
-              </div>
-              
-              <h3 className="font-bold text-xs uppercase mb-1 truncate text-slate-800">{item.nome}</h3>
-              
-              <div className="flex items-center justify-between mt-auto pt-4">
-                <div className="flex items-center gap-1.5 bg-yellow-50 text-yellow-700 px-3 py-1.5 rounded-full border border-yellow-200 text-[10px] font-black">
-                  <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
-                  {item.valor.toLocaleString('pt-BR')} PTS
+          {/* GRID DE PRÊMIOS DA UNIDADE */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {lista.map((item) => (
+              <div key={item.id} className="group border border-slate-50 rounded-2xl p-3 hover:shadow-md transition-all">
+                <div className="aspect-square bg-slate-50 rounded-xl mb-3 overflow-hidden flex items-center justify-center relative border border-slate-100">
+                  {item.imagemUrl ? (
+                    <img src={item.imagemUrl} alt={item.nome} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  ) : (
+                    <Gift className="h-8 w-8 text-slate-200" />
+                  )}
+                  {item.quantidade === 0 && (
+                    <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex items-center justify-center">
+                      <span className="bg-slate-900 text-white text-[8px] font-black px-2 py-1 rounded uppercase">Esgotado</span>
+                    </div>
+                  )}
                 </div>
-                <div className="text-right">
-                  <span className="block text-[9px] font-black text-slate-400 uppercase">Estoque</span>
-                  <span className="text-[10px] font-bold text-slate-600">{item.quantidade} un.</span>
+                
+                <h3 className="font-bold text-[10px] uppercase truncate text-slate-700 mb-2">{item.nome}</h3>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-1 rounded-full border border-yellow-200 text-[9px] font-black">
+                    <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                    {item.valor} PTS
+                  </div>
+                  <span className="text-[9px] font-bold text-slate-400 italic">{item.quantidade} un.</span>
                 </div>
               </div>
-
-              <button className="w-full mt-5 py-3 bg-slate-900 text-white hover:bg-primary text-[10px] font-black rounded-xl uppercase transition-all shadow-sm active:scale-95">
-                Solicitar Resgate
-              </button>
-            </div>
-          ))
-        ) : (
-          <div className="col-span-full py-20 text-center border-2 border-dashed rounded-2xl">
-            <Gift className="h-12 w-12 text-slate-200 mx-auto mb-4" />
-            <p className="text-xs font-bold uppercase text-slate-400">Nenhum prêmio disponível agora.</p>
+            ))}
           </div>
-        )}
-      </div>
+        </section>
+      ))}
     </div>
   );
 }
