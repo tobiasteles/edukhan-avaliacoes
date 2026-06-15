@@ -7,6 +7,7 @@ const adminIds = [
   "user_3BduBaVYwsgkctuAzatWgxcrp7V",
   "user_3CJGbtilZ5sk41HIhuDVUJ8sgNb",
   "user_3CV2R2trJ4JmvFuZ8lzHs4Vjub6",
+  "user_3FC2v7O5evNhF6SzTVBCJskJzbV",
 ];
 
 export const getIsAdmin = async () => {
